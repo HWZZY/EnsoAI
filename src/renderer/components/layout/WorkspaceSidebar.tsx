@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, FolderOpen, Settings, Sparkles, PanelLeftClose } from 'lucide-react';
+import { Search, Plus, FolderOpen, Settings, PanelLeftClose } from 'lucide-react';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 
 interface WorkspaceSidebarProps {
@@ -94,16 +94,6 @@ export function WorkspaceSidebar({
             <p className="text-sm text-muted-foreground">选择项目</p>
           </div>
         )}
-      </div>
-
-      {/* Footer */}
-      <div className="shrink-0 border-t p-3">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <button className="flex items-center gap-1.5 hover:text-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Become Pro · Support Aizen</span>
-          </button>
-        </div>
       </div>
 
       <div className="shrink-0 border-t p-2">

@@ -27,17 +27,28 @@ const WORKTREE_MIN = 200;
 const WORKTREE_MAX = 400;
 const WORKTREE_DEFAULT = 280;
 
+// Helper to get initial value from localStorage
+const getStoredNumber = (key: string, defaultValue: number) => {
+  const saved = localStorage.getItem(key);
+  return saved ? Number(saved) : defaultValue;
+};
+
+const getStoredBoolean = (key: string, defaultValue: boolean) => {
+  const saved = localStorage.getItem(key);
+  return saved !== null ? saved === 'true' : defaultValue;
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('chat');
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [activeWorktree, setActiveWorktree] = useState<GitWorktree | null>(null);
 
-  // Panel sizes and collapsed states
-  const [workspaceWidth, setWorkspaceWidth] = useState(WORKSPACE_DEFAULT);
-  const [worktreeWidth, setWorktreeWidth] = useState(WORKTREE_DEFAULT);
-  const [workspaceCollapsed, setWorkspaceCollapsed] = useState(false);
-  const [worktreeCollapsed, setWorktreeCollapsed] = useState(false);
+  // Panel sizes and collapsed states - initialize from localStorage
+  const [workspaceWidth, setWorkspaceWidth] = useState(() => getStoredNumber('enso-workspace-width', WORKSPACE_DEFAULT));
+  const [worktreeWidth, setWorktreeWidth] = useState(() => getStoredNumber('enso-worktree-width', WORKTREE_DEFAULT));
+  const [workspaceCollapsed, setWorkspaceCollapsed] = useState(() => getStoredBoolean('enso-workspace-collapsed', false));
+  const [worktreeCollapsed, setWorktreeCollapsed] = useState(() => getStoredBoolean('enso-worktree-collapsed', false));
 
   // Resize state
   const [resizing, setResizing] = useState<'workspace' | 'worktree' | null>(null);
@@ -48,19 +59,6 @@ export default function App() {
 
   // Initialize settings store (for theme hydration)
   useSettingsStore();
-
-  // Load panel sizes from localStorage
-  useEffect(() => {
-    const savedWorkspaceWidth = localStorage.getItem('enso-workspace-width');
-    const savedWorktreeWidth = localStorage.getItem('enso-worktree-width');
-    const savedWorkspaceCollapsed = localStorage.getItem('enso-workspace-collapsed');
-    const savedWorktreeCollapsed = localStorage.getItem('enso-worktree-collapsed');
-
-    if (savedWorkspaceWidth) setWorkspaceWidth(Number(savedWorkspaceWidth));
-    if (savedWorktreeWidth) setWorktreeWidth(Number(savedWorktreeWidth));
-    if (savedWorkspaceCollapsed) setWorkspaceCollapsed(savedWorkspaceCollapsed === 'true');
-    if (savedWorktreeCollapsed) setWorktreeCollapsed(savedWorktreeCollapsed === 'true');
-  }, []);
 
   // Save panel sizes to localStorage
   useEffect(() => {
