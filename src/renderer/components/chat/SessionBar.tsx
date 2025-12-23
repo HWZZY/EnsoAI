@@ -266,14 +266,16 @@ export function SessionBar({
             </div>
 
             {sessions.map((session) => (
-              <button
-                type="button"
+              <div
                 key={session.id}
                 onClick={() => onSelectSession(session.id)}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   handleStartEdit(session);
                 }}
+                onKeyDown={(e) => e.key === 'Enter' && onSelectSession(session.id)}
+                role="button"
+                tabIndex={0}
                 className={cn(
                   'group flex items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-colors cursor-pointer',
                   activeSessionId === session.id
@@ -309,7 +311,7 @@ export function SessionBar({
                 >
                   <X className="h-3 w-3" />
                 </button>
-              </button>
+              </div>
             ))}
 
             <div className="mx-1 h-4 w-px bg-border" />

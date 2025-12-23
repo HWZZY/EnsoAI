@@ -41,7 +41,7 @@ export function MainContent({
   const needsTrafficLightPadding = workspaceCollapsed && worktreeCollapsed;
 
   return (
-    <main className="flex flex-1 flex-col overflow-hidden bg-background">
+    <main className="flex min-w-[535px] flex-1 flex-col overflow-hidden bg-background">
       {/* Header with tabs */}
       <header
         className={cn(

@@ -32,7 +32,11 @@ app.whenReady().then(async () => {
   mainWindow = createMainWindow();
 
   // Build and set application menu
-  const menu = buildAppMenu(mainWindow);
+  const menu = buildAppMenu(mainWindow, {
+    onNewWindow: () => {
+      createMainWindow();
+    },
+  });
   Menu.setApplicationMenu(menu);
 
   app.on('activate', () => {
@@ -43,9 +47,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
 
 // Handle uncaught errors

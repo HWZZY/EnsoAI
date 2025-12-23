@@ -20,10 +20,14 @@ export function registerTerminalHandlers(): void {
       const id = ptyManager.create(
         options,
         (data) => {
-          window.webContents.send(IPC_CHANNELS.TERMINAL_DATA, { id, data });
+          if (!window.isDestroyed()) {
+            window.webContents.send(IPC_CHANNELS.TERMINAL_DATA, { id, data });
+          }
         },
         (exitCode, signal) => {
-          window.webContents.send(IPC_CHANNELS.TERMINAL_EXIT, { id, exitCode, signal });
+          if (!window.isDestroyed()) {
+            window.webContents.send(IPC_CHANNELS.TERMINAL_EXIT, { id, exitCode, signal });
+          }
         }
       );
 

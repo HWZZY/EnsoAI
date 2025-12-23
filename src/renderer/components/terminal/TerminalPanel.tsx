@@ -224,8 +224,7 @@ export function TerminalPanel({ cwd, isActive = false }: TerminalPanelProps) {
             const isDragging = draggedId === tab.id;
             const isDropTarget = dropTargetId === tab.id;
             return (
-              <button
-                type="button"
+              <div
                 key={tab.id}
                 draggable={editingId !== tab.id}
                 onDragStart={(e) => handleDragStart(e, tab.id)}
@@ -238,6 +237,9 @@ export function TerminalPanel({ cwd, isActive = false }: TerminalPanelProps) {
                   e.stopPropagation();
                   handleStartEdit(tab);
                 }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSelectTab(tab.id)}
+                role="button"
+                tabIndex={0}
                 className={cn(
                   'group relative flex h-9 min-w-[120px] max-w-[180px] items-center gap-2 border-r border-border px-3 text-sm transition-colors cursor-grab',
                   isActive
@@ -279,7 +281,7 @@ export function TerminalPanel({ cwd, isActive = false }: TerminalPanelProps) {
                 {isActive && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                 )}
-              </button>
+              </div>
             );
           })}
         </div>

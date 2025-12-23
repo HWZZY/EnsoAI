@@ -2,7 +2,11 @@ import { type BrowserWindow, Menu, app, shell } from 'electron';
 
 export type MenuAction = 'open-settings' | 'toggle-devtools' | 'open-action-panel';
 
-export function buildAppMenu(mainWindow: BrowserWindow): Menu {
+interface MenuOptions {
+  onNewWindow?: () => void;
+}
+
+export function buildAppMenu(mainWindow: BrowserWindow, options: MenuOptions = {}): Menu {
   const isMac = process.platform === 'darwin';
 
   const sendAction = (action: MenuAction) => {
@@ -40,6 +44,12 @@ export function buildAppMenu(mainWindow: BrowserWindow): Menu {
     {
       label: '文件',
       submenu: [
+        {
+          label: '新建窗口',
+          accelerator: 'CommandOrControl+N',
+          click: () => options.onNewWindow?.(),
+        },
+        { type: 'separator' as const },
         ...(!isMac
           ? [
               {

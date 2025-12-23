@@ -23,7 +23,9 @@ export function registerAgentHandlers(): void {
     }
 
     const session = await sessionManager.create(agent, workdir, (message) => {
-      window.webContents.send(IPC_CHANNELS.AGENT_MESSAGE, message);
+      if (!window.isDestroyed()) {
+        window.webContents.send(IPC_CHANNELS.AGENT_MESSAGE, message);
+      }
     });
 
     return session.id;

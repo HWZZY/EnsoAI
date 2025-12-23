@@ -67,7 +67,9 @@ export function registerFileHandlers(): void {
     }
 
     const watcher = new FileWatcher(dirPath, (eventType, path) => {
-      window.webContents.send(IPC_CHANNELS.FILE_CHANGE, { type: eventType, path });
+      if (!window.isDestroyed()) {
+        window.webContents.send(IPC_CHANNELS.FILE_CHANGE, { type: eventType, path });
+      }
     });
 
     await watcher.start();
