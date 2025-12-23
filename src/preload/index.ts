@@ -2,6 +2,7 @@ import { IPC_CHANNELS } from '@shared/types';
 import type {
   AgentMetadata,
   DatabaseQueryResult,
+  DetectedApp,
   GitBranch,
   GitLogEntry,
   GitStatus,

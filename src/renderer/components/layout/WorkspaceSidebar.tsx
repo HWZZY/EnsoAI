@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { FolderOpen, PanelLeftClose, Plus, Search, Settings } from 'lucide-react';
+import { FolderGit2, PanelLeftClose, Plus, Search, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 interface WorkspaceSidebarProps {
@@ -30,9 +29,9 @@ export function WorkspaceSidebar({
   );
 
   return (
-    <aside className="flex h-full w-full flex-col border-r bg-muted/30">
-      {/* Top bar with collapse button - h-12 to align with WorktreePanel header */}
-      <div className="flex h-12 shrink-0 items-center justify-end px-2 drag-region">
+    <aside className="flex h-full w-full flex-col border-r bg-background">
+      {/* Header */}
+      <div className="flex h-12 items-center justify-end gap-1 border-b px-3 drag-region">
         {onCollapse && (
           <Button
             variant="ghost"
@@ -47,53 +46,69 @@ export function WorkspaceSidebar({
       </div>
 
       {/* Search */}
-      <div className="px-3 pb-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="px-3 py-2">
+        <div className="flex h-8 items-center gap-2 rounded-lg border bg-background px-2">
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <input
+            type="text"
             placeholder="Search repositories"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
+            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
           />
         </div>
       </div>
 
       {/* Repository List */}
-      <div className="flex-1 overflow-auto px-2">
-        <div className="space-y-1">
-          {filteredRepos.map((repo) => (
-            <button
-              type="button"
-              key={repo.path}
-              onClick={() => onSelectRepo(repo.path)}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors',
-                selectedRepo === repo.path
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground hover:bg-accent/50'
-              )}
-            >
-              <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{repo.name}</div>
-                <div className="truncate text-xs text-muted-foreground">{repo.path}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {filteredRepos.length === 0 && searchQuery && (
+      <div className="flex-1 overflow-auto p-2">
+        {filteredRepos.length === 0 && searchQuery ? (
           <div className="py-8 text-center text-sm text-muted-foreground">没有找到匹配的仓库</div>
-        )}
-
-        {repositories.length === 0 && !searchQuery && (
-          <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">选择项目</p>
+        ) : repositories.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">点击 + 添加仓库</div>
+        ) : (
+          <div className="space-y-1">
+            {filteredRepos.map((repo) => (
+              <button
+                type="button"
+                key={repo.path}
+                onClick={() => onSelectRepo(repo.path)}
+                className={cn(
+                  'flex w-full flex-col items-start gap-1 rounded-lg p-3 text-left transition-colors',
+                  selectedRepo === repo.path
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-accent/50'
+                )}
+              >
+                {/* Repo name */}
+                <div className="flex w-full items-center gap-2">
+                  <FolderGit2
+                    className={cn(
+                      'h-4 w-4 shrink-0',
+                      selectedRepo === repo.path
+                        ? 'text-accent-foreground'
+                        : 'text-muted-foreground'
+                    )}
+                  />
+                  <span className="truncate font-medium">{repo.name}</span>
+                </div>
+                {/* Path */}
+                <div
+                  className={cn(
+                    'w-full truncate pl-6 text-xs',
+                    selectedRepo === repo.path
+                      ? 'text-accent-foreground/70'
+                      : 'text-muted-foreground'
+                  )}
+                >
+                  {repo.path}
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </div>
 
+      {/* Footer */}
       <div className="shrink-0 border-t p-2">
         <div className="flex items-center gap-2">
           <Button

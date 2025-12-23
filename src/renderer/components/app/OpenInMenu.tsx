@@ -1,6 +1,6 @@
 import { Select, SelectItem, SelectPopup, SelectTrigger } from '@/components/ui/select';
 import { useDetectedApps, useOpenWith } from '@/hooks/useAppDetector';
-import type { AppCategory, DetectedApp } from '@shared/types';
+import { AppCategory, type DetectedApp } from '@shared/types';
 import { ChevronDown, FileCode, FolderOpen, Terminal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -39,7 +39,8 @@ export function OpenInMenu({ path }: OpenInMenuProps) {
     }
   }, []);
 
-  const handleOpen = async (bundleId: string) => {
+  const handleOpen = async (bundleId: string | null) => {
+    if (!bundleId) return;
     if (!path) return;
     setLastUsedApp(bundleId);
     localStorage.setItem('enso-last-opened-app', bundleId);
@@ -82,12 +83,12 @@ export function OpenInMenu({ path }: OpenInMenuProps) {
   const groupedApps = groupAppsByCategory(apps);
 
   return (
-    <div className="flex items-center rounded-full bg-muted">
+    <div className="flex h-8 items-center rounded-full bg-muted">
       {/* Left: Quick open button */}
       <button
         type="button"
         onClick={handleQuickOpen}
-        className="flex items-center gap-1.5 px-3 py-1 text-sm hover:bg-accent/50 rounded-l-full transition-colors"
+        className="flex h-full items-center gap-1.5 px-3 text-sm hover:bg-accent/50 rounded-l-full transition-colors"
       >
         <AppIcon bundleId={defaultApp.bundleId} name={defaultApp.name} fallback={FolderOpen} />
         <span>{defaultApp.name}</span>
@@ -95,7 +96,7 @@ export function OpenInMenu({ path }: OpenInMenuProps) {
 
       {/* Right: Dropdown trigger */}
       <Select value="" onValueChange={handleOpen}>
-        <SelectTrigger className="h-auto min-h-0 min-w-0 w-6 gap-0 rounded-r-full border-0 bg-transparent p-0 px-1 shadow-none hover:bg-accent/50 data-[state=open]:bg-accent/50 [&_[data-slot=select-icon]]:hidden">
+        <SelectTrigger className="h-full min-h-0 min-w-0 w-6 gap-0 rounded-r-full border-0 bg-transparent p-0 px-1 shadow-none ring-0 focus-visible:ring-0 focus-visible:border-0 hover:bg-accent/50 data-[state=open]:bg-accent/50 [&_[data-slot=select-icon]]:hidden">
           <ChevronDown className="h-3 w-3" />
         </SelectTrigger>
         <SelectPopup>
@@ -148,13 +149,15 @@ export function OpenInMenu({ path }: OpenInMenuProps) {
 
 function groupAppsByCategory(apps: DetectedApp[]): Record<AppCategory, DetectedApp[]> {
   const grouped: Record<AppCategory, DetectedApp[]> = {
-    finder: [],
-    terminal: [],
-    editor: [],
+    [AppCategory.Finder]: [],
+    [AppCategory.Terminal]: [],
+    [AppCategory.Editor]: [],
   };
 
   for (const app of apps) {
-    grouped[app.category].push(app);
+    if (grouped[app.category]) {
+      grouped[app.category].push(app);
+    }
   }
 
   return grouped;

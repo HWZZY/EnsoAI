@@ -8,7 +8,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { CreateWorktreeDialog } from '@/components/worktree/CreateWorktreeDialog';
 import { cn } from '@/lib/utils';
 import type { GitBranch as GitBranchType, GitWorktree, WorktreeCreateOptions } from '@shared/types';
@@ -127,13 +126,14 @@ export function WorktreePanel({
 
       {/* Search bar */}
       <div className="px-3 py-2">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <div className="flex h-8 items-center gap-2 rounded-lg border bg-background px-2">
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <input
+            type="text"
             placeholder="Search worktrees"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 pl-8 text-sm"
+            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
           />
         </div>
       </div>
@@ -248,7 +248,11 @@ function WorktreeItem({ worktree, isActive, onClick, onDelete }: WorktreeItemPro
           <GitBranch
             className={cn(
               'h-4 w-4 shrink-0',
-              isPrunable ? 'text-destructive' : 'text-muted-foreground'
+              isPrunable
+                ? 'text-destructive'
+                : isActive
+                  ? 'text-accent-foreground'
+                  : 'text-muted-foreground'
             )}
           />
           <span className={cn('truncate font-medium', isPrunable && 'line-through')}>
@@ -268,8 +272,9 @@ function WorktreeItem({ worktree, isActive, onClick, onDelete }: WorktreeItemPro
         {/* Path */}
         <div
           className={cn(
-            'w-full truncate pl-6 text-xs text-muted-foreground',
-            isPrunable && 'line-through'
+            'w-full truncate pl-6 text-xs',
+            isPrunable && 'line-through',
+            isActive ? 'text-accent-foreground/70' : 'text-muted-foreground'
           )}
         >
           {worktree.path}
@@ -277,7 +282,12 @@ function WorktreeItem({ worktree, isActive, onClick, onDelete }: WorktreeItemPro
 
         {/* Meta info - hide for prunable */}
         {!isPrunable && (
-          <div className="flex w-full items-center gap-3 pl-6 pt-1 text-xs text-muted-foreground">
+          <div
+            className={cn(
+              'flex w-full items-center gap-3 pl-6 pt-1 text-xs',
+              isActive ? 'text-accent-foreground/70' : 'text-muted-foreground'
+            )}
+          >
             <span>{lastAccessed}</span>
             <div className="flex items-center gap-1">
               <Sparkles className="h-3 w-3" />

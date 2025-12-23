@@ -42,11 +42,10 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-type SettingsCategory = 'appearance' | 'terminal';
+type SettingsCategory = 'appearance';
 
 const categories: Array<{ id: SettingsCategory; icon: React.ElementType; label: string }> = [
   { id: 'appearance', icon: Palette, label: '外观' },
-  { id: 'terminal', icon: Terminal, label: '终端' },
 ];
 
 interface SettingsDialogProps {
@@ -104,7 +103,6 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
           {/* Right: Settings Panel */}
           <div className="flex-1 overflow-y-auto p-6">
             {activeCategory === 'appearance' && <AppearanceSettings />}
-            {activeCategory === 'terminal' && <TerminalSettings />}
           </div>
         </div>
       </DialogPopup>
@@ -112,73 +110,22 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   );
 }
 
-function AppearanceSettings() {
-  const { theme, setTheme } = useSettingsStore();
-
-  const themeOptions: Array<{
-    value: Theme;
-    icon: React.ElementType;
-    label: string;
-    description: string;
-  }> = [
-    { value: 'light', icon: Sun, label: '浅色', description: '明亮的界面主题' },
-    { value: 'dark', icon: Moon, label: '深色', description: '护眼的暗色主题' },
-    { value: 'system', icon: Monitor, label: '跟随系统', description: '自动适配系统主题' },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">主题</h3>
-        <p className="text-sm text-muted-foreground">选择你喜欢的界面主题</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        {themeOptions.map((option) => (
-          <button
-            type="button"
-            key={option.value}
-            onClick={() => setTheme(option.value)}
-            className={cn(
-              'flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors',
-              theme === option.value
-                ? 'border-primary bg-accent'
-                : 'border-transparent bg-muted/50 hover:bg-muted'
-            )}
-          >
-            <div
-              className={cn(
-                'flex h-12 w-12 items-center justify-center rounded-full',
-                theme === option.value ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              )}
-            >
-              <option.icon className="h-6 w-6" />
-            </div>
-            <span className="font-medium">{option.label}</span>
-            <span className="text-xs text-muted-foreground text-center">{option.description}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const fontWeightOptions: { value: FontWeight; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: '100', label: '100 (Thin)' },
-  { value: '200', label: '200 (Extra Light)' },
-  { value: '300', label: '300 (Light)' },
-  { value: '400', label: '400 (Regular)' },
-  { value: '500', label: '500 (Medium)' },
-  { value: '600', label: '600 (Semi Bold)' },
-  { value: '700', label: '700 (Bold)' },
-  { value: '800', label: '800 (Extra Bold)' },
-  { value: '900', label: '900 (Black)' },
-  { value: 'bold', label: 'Bold' },
+const themeModeOptions: {
+  value: Theme;
+  icon: React.ElementType;
+  label: string;
+  description: string;
+}[] = [
+  { value: 'light', icon: Sun, label: '浅色', description: '明亮的界面主题' },
+  { value: 'dark', icon: Moon, label: '深色', description: '护眼的暗色主题' },
+  { value: 'system', icon: Monitor, label: '跟随系统', description: '自动适配系统主题' },
+  { value: 'sync-terminal', icon: Terminal, label: '同步终端', description: '跟随终端配色方案' },
 ];
 
-function TerminalSettings() {
+function AppearanceSettings() {
   const {
+    theme,
+    setTheme,
     terminalTheme,
     setTerminalTheme,
     terminalFontSize,
@@ -222,7 +169,45 @@ function TerminalSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Preview at top */}
+      {/* Theme Mode Section */}
+      <div>
+        <h3 className="text-lg font-medium">模式</h3>
+        <p className="text-sm text-muted-foreground">选择界面的深浅模式</p>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        {themeModeOptions.map((option) => (
+          <button
+            type="button"
+            key={option.value}
+            onClick={() => setTheme(option.value)}
+            className={cn(
+              'flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors',
+              theme === option.value
+                ? 'border-primary bg-accent'
+                : 'border-transparent bg-muted/50 hover:bg-muted'
+            )}
+          >
+            <div
+              className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-full',
+                theme === option.value ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              )}
+            >
+              <option.icon className="h-5 w-5" />
+            </div>
+            <span className="text-sm font-medium">{option.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Terminal Section */}
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-medium">终端</h3>
+        <p className="text-sm text-muted-foreground">自定义终端外观</p>
+      </div>
+
+      {/* Preview */}
       <div className="space-y-2">
         <p className="text-sm font-medium">预览</p>
         <TerminalPreview
@@ -233,104 +218,108 @@ function TerminalSettings() {
         />
       </div>
 
-      {/* Theme Section */}
-      <div className="border-t pt-6">
-        <h3 className="text-lg font-medium">终端主题</h3>
-        <p className="text-sm text-muted-foreground">选择终端配色方案</p>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={handlePrevTheme}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <ThemeCombobox
-            value={terminalTheme}
-            onValueChange={handleThemeChange}
-            themes={themeNames}
-          />
-        </div>
-        <Button variant="outline" size="icon" onClick={handleNextTheme}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Font Section */}
-      <div className="border-t pt-6">
-        <h3 className="text-lg font-medium">字体设置</h3>
-        <p className="text-sm text-muted-foreground">自定义终端字体样式</p>
-      </div>
-
-      <div className="grid gap-4">
-        {/* Font Family */}
-        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <span className="text-sm font-medium">字体</span>
-          <Input
-            value={terminalFontFamily}
-            onChange={(e) => setTerminalFontFamily(e.target.value)}
-            placeholder="JetBrains Mono, monospace"
-          />
-        </div>
-
-        {/* Font Size */}
-        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <span className="text-sm font-medium">字号</span>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              value={terminalFontSize}
-              onChange={(e) => setTerminalFontSize(Number(e.target.value))}
-              min={8}
-              max={32}
-              className="w-20"
+      {/* Theme Selector */}
+      <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+        <span className="text-sm font-medium">配色</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={handlePrevTheme}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1">
+            <ThemeCombobox
+              value={terminalTheme}
+              onValueChange={handleThemeChange}
+              themes={themeNames}
             />
-            <span className="text-sm text-muted-foreground">px</span>
           </div>
+          <Button variant="outline" size="icon" onClick={handleNextTheme}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
+      </div>
 
-        {/* Font Weight */}
-        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <span className="text-sm font-medium">字重</span>
-          <Select
-            value={terminalFontWeight}
-            onValueChange={(v) => setTerminalFontWeight(v as FontWeight)}
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectPopup>
-              {fontWeightOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-        </div>
+      {/* Font Family */}
+      <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+        <span className="text-sm font-medium">字体</span>
+        <Input
+          value={terminalFontFamily}
+          onChange={(e) => setTerminalFontFamily(e.target.value)}
+          placeholder="JetBrains Mono, monospace"
+        />
+      </div>
 
-        {/* Font Weight Bold */}
-        <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-          <span className="text-sm font-medium">粗体字重</span>
-          <Select
-            value={terminalFontWeightBold}
-            onValueChange={(v) => setTerminalFontWeightBold(v as FontWeight)}
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectPopup>
-              {fontWeightOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
+      {/* Font Size */}
+      <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+        <span className="text-sm font-medium">字号</span>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            value={terminalFontSize}
+            onChange={(e) => setTerminalFontSize(Number(e.target.value))}
+            min={8}
+            max={32}
+            className="w-20"
+          />
+          <span className="text-sm text-muted-foreground">px</span>
         </div>
+      </div>
+
+      {/* Font Weight */}
+      <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+        <span className="text-sm font-medium">字重</span>
+        <Select
+          value={terminalFontWeight}
+          onValueChange={(v) => setTerminalFontWeight(v as FontWeight)}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectPopup>
+            {fontWeightOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+      </div>
+
+      {/* Font Weight Bold */}
+      <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+        <span className="text-sm font-medium">粗体字重</span>
+        <Select
+          value={terminalFontWeightBold}
+          onValueChange={(v) => setTerminalFontWeightBold(v as FontWeight)}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectPopup>
+            {fontWeightOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
       </div>
     </div>
   );
 }
+
+const fontWeightOptions: { value: FontWeight; label: string }[] = [
+  { value: 'normal', label: 'Normal' },
+  { value: '100', label: '100 (Thin)' },
+  { value: '200', label: '200 (Extra Light)' },
+  { value: '300', label: '300 (Light)' },
+  { value: '400', label: '400 (Regular)' },
+  { value: '500', label: '500 (Medium)' },
+  { value: '600', label: '600 (Semi Bold)' },
+  { value: '700', label: '700 (Bold)' },
+  { value: '800', label: '800 (Extra Bold)' },
+  { value: '900', label: '900 (Black)' },
+  { value: 'bold', label: 'Bold' },
+];
 
 function TerminalPreview({
   theme,

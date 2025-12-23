@@ -105,7 +105,7 @@ export function WorktreesView() {
         <h2 className="text-lg font-semibold">Worktrees</h2>
         <CreateWorktreeDialog
           branches={branches}
-          defaultPath={`${currentWorkspace.path}-worktree`}
+          projectName={currentWorkspace.name}
           isLoading={createWorktree.isPending}
           onSubmit={handleCreate}
         />

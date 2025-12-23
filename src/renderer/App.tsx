@@ -11,7 +11,7 @@ import { useSettingsStore } from './stores/settings';
 import { useWorkspaceStore } from './stores/workspace';
 
 // Animation config
-const panelTransition = { type: 'spring', stiffness: 400, damping: 30 };
+const panelTransition = { type: 'spring' as const, stiffness: 400, damping: 30 };
 
 type TabId = 'chat' | 'file' | 'terminal' | 'source-control';
 
@@ -319,7 +319,7 @@ export default function App() {
             animate={{ width: workspaceWidth, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={panelTransition}
-            className="h-full shrink-0 overflow-hidden"
+            className="relative h-full shrink-0 overflow-hidden"
           >
             <WorkspaceSidebar
               repositories={repositories}
@@ -330,22 +330,12 @@ export default function App() {
               collapsed={false}
               onCollapse={() => setWorkspaceCollapsed(true)}
             />
+            {/* Resize handle */}
+            <div
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/20 active:bg-primary/30 transition-colors z-10"
+              onMouseDown={handleResizeStart('workspace')}
+            />
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Resize handle for workspace */}
-      <AnimatePresence initial={false}>
-        {!workspaceCollapsed && (
-          <motion.div
-            key="workspace-resize"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="w-1 cursor-col-resize bg-transparent hover:bg-primary/20 active:bg-primary/30 transition-colors shrink-0"
-            onMouseDown={handleResizeStart('workspace')}
-          />
         )}
       </AnimatePresence>
 
@@ -358,7 +348,7 @@ export default function App() {
             animate={{ width: worktreeWidth, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={panelTransition}
-            className="h-full shrink-0 overflow-hidden"
+            className="relative h-full shrink-0 overflow-hidden"
           >
             <WorktreePanel
               worktrees={worktrees}
@@ -380,22 +370,12 @@ export default function App() {
               workspaceCollapsed={workspaceCollapsed}
               onExpandWorkspace={() => setWorkspaceCollapsed(false)}
             />
+            {/* Resize handle */}
+            <div
+              className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary/20 active:bg-primary/30 transition-colors z-10"
+              onMouseDown={handleResizeStart('worktree')}
+            />
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Resize handle for worktree */}
-      <AnimatePresence initial={false}>
-        {!worktreeCollapsed && (
-          <motion.div
-            key="worktree-resize"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="w-1 cursor-col-resize bg-transparent hover:bg-primary/20 active:bg-primary/30 transition-colors shrink-0"
-            onMouseDown={handleResizeStart('worktree')}
-          />
         )}
       </AnimatePresence>
 

@@ -1,8 +1,10 @@
 import { exec } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { promisify } from 'node:util';
-import type { AppCategory, DetectedApp } from '@shared/types';
+import { AppCategory, type DetectedApp } from '@shared/types';
 
 const execAsync = promisify(exec);
 
@@ -15,53 +17,57 @@ interface KnownApp {
 export class AppDetector {
   private static knownApps: KnownApp[] = [
     // Terminals
-    { name: 'Terminal', bundleId: 'com.apple.Terminal', category: 'terminal' },
-    { name: 'iTerm', bundleId: 'com.googlecode.iterm2', category: 'terminal' },
-    { name: 'Warp', bundleId: 'dev.warp.Warp-Stable', category: 'terminal' },
-    { name: 'Alacritty', bundleId: 'org.alacritty', category: 'terminal' },
-    { name: 'Kitty', bundleId: 'net.kovidgoyal.kitty', category: 'terminal' },
-    { name: 'Hyper', bundleId: 'co.zeit.hyper', category: 'terminal' },
-    { name: 'Ghostty', bundleId: 'com.mitchellh.ghostty', category: 'terminal' },
-    { name: 'Rio', bundleId: 'com.raphamorim.rio', category: 'terminal' },
+    { name: 'Terminal', bundleId: 'com.apple.Terminal', category: AppCategory.Terminal },
+    { name: 'iTerm', bundleId: 'com.googlecode.iterm2', category: AppCategory.Terminal },
+    { name: 'Warp', bundleId: 'dev.warp.Warp-Stable', category: AppCategory.Terminal },
+    { name: 'Alacritty', bundleId: 'org.alacritty', category: AppCategory.Terminal },
+    { name: 'Kitty', bundleId: 'net.kovidgoyal.kitty', category: AppCategory.Terminal },
+    { name: 'Hyper', bundleId: 'co.zeit.hyper', category: AppCategory.Terminal },
+    { name: 'Ghostty', bundleId: 'com.mitchellh.ghostty', category: AppCategory.Terminal },
+    { name: 'Rio', bundleId: 'com.raphamorim.rio', category: AppCategory.Terminal },
 
     // Editors - Mainstream
-    { name: 'Xcode', bundleId: 'com.apple.dt.Xcode', category: 'editor' },
-    { name: 'Visual Studio Code', bundleId: 'com.microsoft.VSCode', category: 'editor' },
-    { name: 'VSCodium', bundleId: 'com.visualstudio.code.oss', category: 'editor' },
-    { name: 'Cursor', bundleId: 'com.todesktop.230313mzl4w4u92', category: 'editor' },
-    { name: 'Windsurf', bundleId: 'com.codeium.windsurf', category: 'editor' },
-    { name: 'Sublime Text', bundleId: 'com.sublimetext.4', category: 'editor' },
-    { name: 'Nova', bundleId: 'com.panic.Nova', category: 'editor' },
-    { name: 'TextMate', bundleId: 'com.macromates.TextMate', category: 'editor' },
-    { name: 'Zed', bundleId: 'dev.zed.Zed', category: 'editor' },
+    { name: 'Xcode', bundleId: 'com.apple.dt.Xcode', category: AppCategory.Editor },
+    { name: 'Visual Studio Code', bundleId: 'com.microsoft.VSCode', category: AppCategory.Editor },
+    { name: 'VSCodium', bundleId: 'com.visualstudio.code.oss', category: AppCategory.Editor },
+    { name: 'Cursor', bundleId: 'com.todesktop.230313mzl4w4u92', category: AppCategory.Editor },
+    { name: 'Windsurf', bundleId: 'com.exafunction.windsurf', category: AppCategory.Editor },
+    { name: 'Sublime Text', bundleId: 'com.sublimetext.4', category: AppCategory.Editor },
+    { name: 'Nova', bundleId: 'com.panic.Nova', category: AppCategory.Editor },
+    { name: 'TextMate', bundleId: 'com.macromates.TextMate', category: AppCategory.Editor },
+    { name: 'Zed', bundleId: 'dev.zed.Zed', category: AppCategory.Editor },
 
     // Editors - JetBrains
-    { name: 'Android Studio', bundleId: 'com.google.android.studio', category: 'editor' },
-    { name: 'IntelliJ IDEA', bundleId: 'com.jetbrains.intellij', category: 'editor' },
-    { name: 'IntelliJ IDEA CE', bundleId: 'com.jetbrains.intellij.ce', category: 'editor' },
-    { name: 'WebStorm', bundleId: 'com.jetbrains.WebStorm', category: 'editor' },
-    { name: 'PyCharm', bundleId: 'com.jetbrains.pycharm', category: 'editor' },
-    { name: 'PyCharm CE', bundleId: 'com.jetbrains.pycharm.ce', category: 'editor' },
-    { name: 'CLion', bundleId: 'com.jetbrains.CLion', category: 'editor' },
-    { name: 'GoLand', bundleId: 'com.jetbrains.goland', category: 'editor' },
-    { name: 'PhpStorm', bundleId: 'com.jetbrains.PhpStorm', category: 'editor' },
-    { name: 'Rider', bundleId: 'com.jetbrains.rider', category: 'editor' },
-    { name: 'AppCode', bundleId: 'com.jetbrains.AppCode', category: 'editor' },
-    { name: 'DataGrip', bundleId: 'com.jetbrains.datagrip', category: 'editor' },
-    { name: 'RustRover', bundleId: 'com.jetbrains.rustrover', category: 'editor' },
-    { name: 'Fleet', bundleId: 'com.jetbrains.fleet', category: 'editor' },
+    { name: 'Android Studio', bundleId: 'com.google.android.studio', category: AppCategory.Editor },
+    { name: 'IntelliJ IDEA', bundleId: 'com.jetbrains.intellij', category: AppCategory.Editor },
+    {
+      name: 'IntelliJ IDEA CE',
+      bundleId: 'com.jetbrains.intellij.ce',
+      category: AppCategory.Editor,
+    },
+    { name: 'WebStorm', bundleId: 'com.jetbrains.WebStorm', category: AppCategory.Editor },
+    { name: 'PyCharm', bundleId: 'com.jetbrains.pycharm', category: AppCategory.Editor },
+    { name: 'PyCharm CE', bundleId: 'com.jetbrains.pycharm.ce', category: AppCategory.Editor },
+    { name: 'CLion', bundleId: 'com.jetbrains.CLion', category: AppCategory.Editor },
+    { name: 'GoLand', bundleId: 'com.jetbrains.goland', category: AppCategory.Editor },
+    { name: 'PhpStorm', bundleId: 'com.jetbrains.PhpStorm', category: AppCategory.Editor },
+    { name: 'Rider', bundleId: 'com.jetbrains.rider', category: AppCategory.Editor },
+    { name: 'AppCode', bundleId: 'com.jetbrains.AppCode', category: AppCategory.Editor },
+    { name: 'DataGrip', bundleId: 'com.jetbrains.datagrip', category: AppCategory.Editor },
+    { name: 'RustRover', bundleId: 'com.jetbrains.rustrover', category: AppCategory.Editor },
+    { name: 'Fleet', bundleId: 'com.jetbrains.fleet', category: AppCategory.Editor },
 
     // Editors - Others
-    { name: 'Atom', bundleId: 'com.github.atom', category: 'editor' },
-    { name: 'BBEdit', bundleId: 'com.barebones.bbedit', category: 'editor' },
-    { name: 'CotEditor', bundleId: 'com.coteditor.CotEditor', category: 'editor' },
-    { name: 'MacVim', bundleId: 'org.vim.MacVim', category: 'editor' },
-    { name: 'Emacs', bundleId: 'org.gnu.Emacs', category: 'editor' },
-    { name: 'Brackets', bundleId: 'io.brackets.appshell', category: 'editor' },
-    { name: 'TextEdit', bundleId: 'com.apple.TextEdit', category: 'editor' },
+    { name: 'Atom', bundleId: 'com.github.atom', category: AppCategory.Editor },
+    { name: 'BBEdit', bundleId: 'com.barebones.bbedit', category: AppCategory.Editor },
+    { name: 'CotEditor', bundleId: 'com.coteditor.CotEditor', category: AppCategory.Editor },
+    { name: 'MacVim', bundleId: 'org.vim.MacVim', category: AppCategory.Editor },
+    { name: 'Emacs', bundleId: 'org.gnu.Emacs', category: AppCategory.Editor },
+    { name: 'Brackets', bundleId: 'io.brackets.appshell', category: AppCategory.Editor },
+    { name: 'TextEdit', bundleId: 'com.apple.TextEdit', category: AppCategory.Editor },
 
     // System
-    { name: 'Finder', bundleId: 'com.apple.finder', category: 'finder' },
+    { name: 'Finder', bundleId: 'com.apple.finder', category: AppCategory.Finder },
   ];
 
   private detectedApps: DetectedApp[] = [];
@@ -73,24 +79,51 @@ export class AppDetector {
     }
 
     const detected: DetectedApp[] = [];
+    const bundleIdToApp = new Map(AppDetector.knownApps.map((app) => [app.bundleId, app]));
 
-    for (const knownApp of AppDetector.knownApps) {
+    // Scan common app locations
+    const appDirs = [
+      '/Applications',
+      '/System/Applications',
+      '/System/Library/CoreServices', // Finder.app
+      join(homedir(), 'Applications'),
+    ];
+
+    for (const appDir of appDirs) {
+      if (!existsSync(appDir)) continue;
+
       try {
-        const { stdout } = await execAsync(
-          `mdfind "kMDItemCFBundleIdentifier == '${knownApp.bundleId}'"`
-        );
-        const appPath = stdout.trim().split('\n')[0];
+        const entries = await readdir(appDir);
+        for (const entry of entries) {
+          if (!entry.endsWith('.app')) continue;
 
-        if (appPath) {
-          detected.push({
-            name: knownApp.name,
-            bundleId: knownApp.bundleId,
-            category: knownApp.category,
-            path: appPath,
-          });
+          const appPath = join(appDir, entry);
+          const plistPath = join(appPath, 'Contents', 'Info.plist');
+
+          if (!existsSync(plistPath)) continue;
+
+          try {
+            // Read bundle ID from Info.plist using PlistBuddy
+            const { stdout } = await execAsync(
+              `/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "${plistPath}" 2>/dev/null`
+            );
+            const bundleId = stdout.trim();
+
+            const knownApp = bundleIdToApp.get(bundleId);
+            if (knownApp) {
+              detected.push({
+                name: knownApp.name,
+                bundleId: knownApp.bundleId,
+                category: knownApp.category,
+                path: appPath,
+              });
+            }
+          } catch {
+            // Failed to read plist, skip
+          }
         }
       } catch {
-        // App not found, skip
+        // Failed to read directory, skip
       }
     }
 

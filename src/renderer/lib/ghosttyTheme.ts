@@ -136,3 +136,156 @@ export const defaultLightTheme: XtermTheme = {
   brightCyan: '#0598bc',
   brightWhite: '#a5a5a5',
 };
+
+// Hex color utilities
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: Number.parseInt(result[1], 16),
+        g: Number.parseInt(result[2], 16),
+        b: Number.parseInt(result[3], 16),
+      }
+    : null;
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map((x) => Math.round(x).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function mixColors(color1: string, color2: string, weight: number): string {
+  const c1 = hexToRgb(color1);
+  const c2 = hexToRgb(color2);
+  if (!c1 || !c2) return color1;
+  const w = Math.max(0, Math.min(1, weight));
+  return rgbToHex(c1.r * (1 - w) + c2.r * w, c1.g * (1 - w) + c2.g * w, c1.b * (1 - w) + c2.b * w);
+}
+
+function getLuminance(hex: string): number {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return 0;
+  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+export function isTerminalThemeDark(themeName: string): boolean {
+  const theme = getXtermTheme(themeName);
+  if (!theme) return true;
+  return getLuminance(theme.background) < 0.5;
+}
+
+// Apply terminal theme colors to app CSS variables
+// syncDarkMode: if true, toggle dark class based on terminal theme; if false, don't change it
+export function applyTerminalThemeToApp(themeName: string, syncDarkMode = true): void {
+  const theme = getXtermTheme(themeName);
+  if (!theme) return;
+
+  const root = document.documentElement;
+  const isDark = getLuminance(theme.background) < 0.5;
+
+  // Only toggle dark class if syncDarkMode is true
+  if (syncDarkMode) {
+    root.classList.toggle('dark', isDark);
+  }
+
+  // Base colors
+  root.style.setProperty('--background', theme.background);
+  root.style.setProperty('--foreground', theme.foreground);
+
+  // Card - same as background or slightly different
+  root.style.setProperty('--card', theme.background);
+  root.style.setProperty('--card-foreground', theme.foreground);
+
+  // Popover
+  root.style.setProperty('--popover', theme.background);
+  root.style.setProperty('--popover-foreground', theme.foreground);
+
+  // Primary - use foreground as primary
+  root.style.setProperty('--primary', theme.foreground);
+  root.style.setProperty('--primary-foreground', theme.background);
+
+  // Secondary - muted version of background
+  const secondaryBg = isDark
+    ? mixColors(theme.background, theme.brightBlack, 0.5)
+    : mixColors(theme.background, theme.black, 0.1);
+  root.style.setProperty('--secondary', secondaryBg);
+  root.style.setProperty('--secondary-foreground', theme.foreground);
+
+  // Muted
+  const mutedBg = isDark
+    ? mixColors(theme.background, theme.brightBlack, 0.4)
+    : mixColors(theme.background, theme.black, 0.08);
+  const mutedFg = isDark
+    ? mixColors(theme.foreground, theme.background, 0.4)
+    : mixColors(theme.foreground, theme.background, 0.3);
+  root.style.setProperty('--muted', mutedBg);
+  root.style.setProperty('--muted-foreground', mutedFg);
+
+  // Accent - use blue (more neutral than cyan)
+  const accentColor = isDark ? theme.brightBlue : theme.blue;
+  const isAccentDark = getLuminance(accentColor) < 0.5;
+  root.style.setProperty('--accent', accentColor);
+  root.style.setProperty('--accent-foreground', isAccentDark ? '#ffffff' : '#000000');
+
+  // Semantic colors
+  root.style.setProperty('--destructive', theme.red);
+  root.style.setProperty('--destructive-foreground', '#ffffff');
+
+  root.style.setProperty('--success', theme.green);
+  root.style.setProperty('--success-foreground', '#ffffff');
+
+  root.style.setProperty('--warning', theme.yellow);
+  root.style.setProperty('--warning-foreground', isDark ? theme.background : '#000000');
+
+  root.style.setProperty('--info', theme.blue);
+  root.style.setProperty('--info-foreground', '#ffffff');
+
+  // Border & input
+  const borderColor = isDark
+    ? mixColors(theme.background, theme.foreground, 0.15)
+    : mixColors(theme.background, theme.foreground, 0.12);
+  root.style.setProperty('--border', borderColor);
+  root.style.setProperty('--input', borderColor);
+
+  // Ring - accent based
+  root.style.setProperty('--ring', isDark ? theme.brightBlue : theme.blue);
+}
+
+// Clear terminal theme colors from app (restore CSS defaults)
+export function clearTerminalThemeFromApp(): void {
+  const root = document.documentElement;
+  const cssVars = [
+    '--background',
+    '--foreground',
+    '--card',
+    '--card-foreground',
+    '--popover',
+    '--popover-foreground',
+    '--primary',
+    '--primary-foreground',
+    '--secondary',
+    '--secondary-foreground',
+    '--muted',
+    '--muted-foreground',
+    '--accent',
+    '--accent-foreground',
+    '--destructive',
+    '--destructive-foreground',
+    '--success',
+    '--success-foreground',
+    '--warning',
+    '--warning-foreground',
+    '--info',
+    '--info-foreground',
+    '--border',
+    '--input',
+    '--ring',
+  ];
+
+  for (const v of cssVars) {
+    root.style.removeProperty(v);
+  }
+}
