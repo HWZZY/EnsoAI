@@ -101,7 +101,7 @@ export function DiffViewer({
   hasPrevFile = false,
   hasNextFile = false,
 }: DiffViewerProps) {
-  const { terminalTheme } = useSettingsStore();
+  const { terminalTheme, sourceControlKeybindings } = useSettingsStore();
   const { navigationDirection, setNavigationDirection } = useSourceControlStore();
   const { data: diff, isLoading } = useFileDiff(
     rootPath,
@@ -294,15 +294,13 @@ export function DiffViewer({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!file) return;
 
-      const bindings = useSettingsStore.getState().sourceControlKeybindings;
-
-      if (matchesKeybinding(e, bindings.prevDiff)) {
+      if (matchesKeybinding(e, sourceControlKeybindings.prevDiff)) {
         e.preventDefault();
         navigateToDiff('prev');
         return;
       }
 
-      if (matchesKeybinding(e, bindings.nextDiff)) {
+      if (matchesKeybinding(e, sourceControlKeybindings.nextDiff)) {
         e.preventDefault();
         navigateToDiff('next');
         return;
@@ -311,7 +309,7 @@ export function DiffViewer({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [file, navigateToDiff]);
+  }, [file, navigateToDiff, sourceControlKeybindings]);
 
   // Reset state when file changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally trigger on file change

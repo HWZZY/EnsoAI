@@ -144,7 +144,14 @@ export class GitService {
   }
 
   async getFileDiff(filePath: string, staged: boolean): Promise<FileDiff> {
-    // Validate path to prevent path traversal attacks
+    // 1. Check for symbolic links first (before resolving path)
+    const initialPath = path.join(this.workdir, filePath);
+    const stats = await fs.lstat(initialPath).catch(() => null);
+    if (stats?.isSymbolicLink()) {
+      throw new Error('Cannot read symbolic links');
+    }
+
+    // 2. Validate path to prevent path traversal attacks
     const absolutePath = path.resolve(this.workdir, filePath);
     const relativePath = path.relative(this.workdir, absolutePath);
 

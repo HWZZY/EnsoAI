@@ -8,7 +8,9 @@ export function useFileChanges(workdir: string | null) {
       return window.electronAPI.git.getFileChanges(workdir);
     },
     enabled: !!workdir,
-    refetchInterval: 3000,
+    refetchInterval: 5000, // Increased from 3s to 5s for better performance
+    refetchIntervalInBackground: false, // Only poll when window is focused
+    staleTime: 2000, // Avoid redundant requests within 2s
   });
 }
 
