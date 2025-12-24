@@ -17,6 +17,14 @@ import '@xterm/xterm/css/xterm.css';
 const FILE_PATH_REGEX =
   /(?:^|[\s'"({[])((?:\.{1,2}\/|\/)?(?:[\w.-]+\/)*[\w.-]+\.(?:tsx|ts|jsx|js|mjs|cjs|json|scss|css|less|html|vue|svelte|md|yaml|yml|toml|py|go|rs|java|cpp|hpp|c|h|rb|php|bash|zsh|sh))(?::(\d+))?(?::(\d+))?/g;
 
+function getDefaultCommand(): { shell: string; args: string[] } {
+  const isWindows = window.electronAPI?.env?.platform === 'win32';
+  if (isWindows) {
+    return { shell: 'powershell.exe', args: ['-NoLogo'] };
+  }
+  return { shell: '/bin/zsh', args: ['-i', '-l'] };
+}
+
 export interface UseXtermOptions {
   cwd?: string;
   /** Shell command and args to run */
@@ -82,7 +90,7 @@ function useTerminalSettings() {
 
 export function useXterm({
   cwd,
-  command = { shell: '/bin/zsh', args: ['-i', '-l'] },
+  command = getDefaultCommand(),
   isActive = true,
   onExit,
   onData,

@@ -190,6 +190,7 @@ const electronAPI = {
   // Environment
   env: {
     HOME: process.env.HOME || process.env.USERPROFILE || '',
+    platform: process.platform as 'darwin' | 'win32' | 'linux',
   },
 
   // Shell

@@ -1,17 +1,27 @@
 import { exec } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { AppCategory, type DetectedApp } from '@shared/types';
 
 const execAsync = promisify(exec);
+const isWindows = process.platform === 'win32';
+const isMac = process.platform === 'darwin';
 
 interface KnownApp {
   name: string;
   bundleId: string;
   category: AppCategory;
+}
+
+// Windows app detection info
+interface WindowsApp {
+  name: string;
+  id: string; // Used as bundleId equivalent
+  category: AppCategory;
+  exePaths: string[]; // Possible executable paths
 }
 
 export class AppDetector {
@@ -70,6 +80,99 @@ export class AppDetector {
     { name: 'Finder', bundleId: 'com.apple.finder', category: AppCategory.Finder },
   ];
 
+  // Windows known apps
+  private static windowsApps: WindowsApp[] = (() => {
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+    const localAppData = process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local');
+    const appData = process.env.APPDATA || join(homedir(), 'AppData', 'Roaming');
+
+    return [
+      // Terminals
+      {
+        name: 'Windows Terminal',
+        id: 'windows.terminal',
+        category: AppCategory.Terminal,
+        exePaths: [join(localAppData, 'Microsoft', 'WindowsApps', 'wt.exe')],
+      },
+      {
+        name: 'PowerShell',
+        id: 'windows.powershell',
+        category: AppCategory.Terminal,
+        exePaths: [
+          join(programFiles, 'PowerShell', '7', 'pwsh.exe'),
+          'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
+        ],
+      },
+      {
+        name: 'Alacritty',
+        id: 'org.alacritty',
+        category: AppCategory.Terminal,
+        exePaths: [
+          join(programFiles, 'Alacritty', 'alacritty.exe'),
+          join(appData, 'alacritty', 'alacritty.exe'),
+        ],
+      },
+
+      // Editors
+      {
+        name: 'Visual Studio Code',
+        id: 'com.microsoft.VSCode',
+        category: AppCategory.Editor,
+        exePaths: [
+          join(localAppData, 'Programs', 'Microsoft VS Code', 'Code.exe'),
+          join(programFiles, 'Microsoft VS Code', 'Code.exe'),
+        ],
+      },
+      {
+        name: 'Cursor',
+        id: 'com.todesktop.230313mzl4w4u92',
+        category: AppCategory.Editor,
+        exePaths: [join(localAppData, 'Programs', 'cursor', 'Cursor.exe')],
+      },
+      {
+        name: 'Sublime Text',
+        id: 'com.sublimetext.4',
+        category: AppCategory.Editor,
+        exePaths: [
+          join(programFiles, 'Sublime Text', 'sublime_text.exe'),
+          join(programFiles, 'Sublime Text 3', 'sublime_text.exe'),
+        ],
+      },
+      {
+        name: 'Notepad++',
+        id: 'notepad++',
+        category: AppCategory.Editor,
+        exePaths: [
+          join(programFiles, 'Notepad++', 'notepad++.exe'),
+          join(programFilesX86, 'Notepad++', 'notepad++.exe'),
+        ],
+      },
+
+      // JetBrains (Toolbox installs)
+      {
+        name: 'IntelliJ IDEA',
+        id: 'com.jetbrains.intellij',
+        category: AppCategory.Editor,
+        exePaths: [join(localAppData, 'JetBrains', 'Toolbox', 'apps', 'IDEA-U', 'ch-0')],
+      },
+      {
+        name: 'WebStorm',
+        id: 'com.jetbrains.WebStorm',
+        category: AppCategory.Editor,
+        exePaths: [join(localAppData, 'JetBrains', 'Toolbox', 'apps', 'WebStorm', 'ch-0')],
+      },
+
+      // System
+      {
+        name: 'Explorer',
+        id: 'windows.explorer',
+        category: AppCategory.Finder,
+        exePaths: ['C:\\Windows\\explorer.exe'],
+      },
+    ];
+  })();
+
   private detectedApps: DetectedApp[] = [];
   private initialized = false;
 
@@ -78,6 +181,42 @@ export class AppDetector {
       return this.detectedApps;
     }
 
+    if (isWindows) {
+      return this.detectWindowsApps();
+    }
+
+    if (isMac) {
+      return this.detectMacApps();
+    }
+
+    // Linux: return empty for now
+    this.initialized = true;
+    return [];
+  }
+
+  private async detectWindowsApps(): Promise<DetectedApp[]> {
+    const detected: DetectedApp[] = [];
+
+    for (const app of AppDetector.windowsApps) {
+      for (const exePath of app.exePaths) {
+        if (existsSync(exePath)) {
+          detected.push({
+            name: app.name,
+            bundleId: app.id,
+            category: app.category,
+            path: exePath,
+          });
+          break; // Found, no need to check other paths
+        }
+      }
+    }
+
+    this.detectedApps = detected;
+    this.initialized = true;
+    return detected;
+  }
+
+  private async detectMacApps(): Promise<DetectedApp[]> {
     const detected: DetectedApp[] = [];
     const bundleIdToApp = new Map(AppDetector.knownApps.map((app) => [app.bundleId, app]));
 
@@ -138,12 +277,32 @@ export class AppDetector {
       throw new Error(`App with bundle ID ${bundleId} not found`);
     }
 
-    await execAsync(`open -b "${bundleId}" "${path}"`);
+    if (isWindows) {
+      // Windows: use Start-Process or direct exe path
+      const escapedPath = path.replace(/"/g, '`"');
+      const escapedExe = detectedApp.path.replace(/"/g, '`"');
+      await execAsync(
+        `powershell -Command "Start-Process '${escapedExe}' -ArgumentList '${escapedPath}'"`
+      );
+    } else {
+      // macOS: use open command
+      await execAsync(`open -b "${bundleId}" "${path}"`);
+    }
   }
 
   async getAppIcon(bundleId: string): Promise<string | undefined> {
     const detectedApp = this.detectedApps.find((a) => a.bundleId === bundleId);
     if (!detectedApp) return undefined;
+
+    if (isWindows) {
+      // Windows icon extraction is complex, return undefined for now
+      // Could use powershell or native module in future
+      return undefined;
+    }
+
+    if (!isMac) {
+      return undefined;
+    }
 
     try {
       // Get icon file name from Info.plist
@@ -158,11 +317,11 @@ export class AppDetector {
         iconName += '.icns';
       }
 
-      const icnsPath = `${detectedApp.path}/Contents/Resources/${iconName}`;
+      const icnsPath = join(detectedApp.path, 'Contents', 'Resources', iconName);
       if (!existsSync(icnsPath)) return undefined;
 
       // Convert icns to png using sips (required for ic13 format on macOS 26+)
-      const tmpPng = `/tmp/enso-icon-${bundleId.replace(/\./g, '-')}.png`;
+      const tmpPng = join(tmpdir(), `enso-icon-${bundleId.replace(/\./g, '-')}.png`);
       await execAsync(`sips -s format png -z 128 128 "${icnsPath}" --out "${tmpPng}" 2>/dev/null`);
 
       const pngData = await readFile(tmpPng);
