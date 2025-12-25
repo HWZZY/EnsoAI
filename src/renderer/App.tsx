@@ -328,6 +328,29 @@ export default function App() {
     setRepositories(repos);
   }, []);
 
+  // Listen for open path event from CLI (enso command)
+  useEffect(() => {
+    const cleanup = window.electronAPI.app.onOpenPath((path) => {
+      console.log('[App] Received onOpenPath:', path);
+      // Check if repo already exists
+      const existingRepo = repositories.find((r) => r.path === path);
+      if (existingRepo) {
+        // Just select it
+        console.log('[App] Repo exists, selecting:', path);
+        setSelectedRepo(path);
+      } else {
+        // Add new repo
+        console.log('[App] Adding new repo:', path);
+        const name = path.split('/').pop() || path;
+        const newRepo: Repository = { name, path };
+        const updated = [...repositories, newRepo];
+        saveRepositories(updated);
+        setSelectedRepo(path);
+      }
+    });
+    return cleanup;
+  }, [repositories, saveRepositories]);
+
   // Remove repository from workspace
   const handleRemoveRepository = useCallback(
     (repoPath: string) => {
