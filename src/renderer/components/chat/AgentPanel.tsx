@@ -212,7 +212,9 @@ export function AgentPanel({ repoPath, cwd, isActive = false }: AgentPanelProps)
 
   // 监听通知点击，激活对应 session
   useEffect(() => {
+    console.log('[AgentPanel] 注册通知点击监听');
     const unsubscribe = window.electronAPI.notification.onClick((sessionId) => {
+      console.log('[AgentPanel] 收到通知点击, sessionId:', sessionId);
       handleSelectSession(sessionId);
     });
     return unsubscribe;
