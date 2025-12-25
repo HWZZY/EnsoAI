@@ -455,6 +455,17 @@ export default function App() {
     [activeWorktree, activeTab, worktreeTabMap]
   );
 
+  // Handle switching worktree by path (used by notification click)
+  const handleSwitchWorktreePath = useCallback(
+    (worktreePath: string) => {
+      const worktree = worktrees.find((wt) => wt.path === worktreePath);
+      if (worktree) {
+        handleSelectWorktree(worktree);
+      }
+    },
+    [worktrees, handleSelectWorktree]
+  );
+
   const handleAddRepository = async () => {
     try {
       const selectedPath = await window.electronAPI.dialog.openDirectory();
@@ -614,6 +625,7 @@ export default function App() {
         worktreeCollapsed={worktreeCollapsed}
         onExpandWorkspace={() => setWorkspaceCollapsed(false)}
         onExpandWorktree={() => setWorktreeCollapsed(false)}
+        onSwitchWorktree={handleSwitchWorktreePath}
       />
 
       {/* Global Settings Dialog */}

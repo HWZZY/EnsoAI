@@ -129,7 +129,6 @@ export function AgentTerminal({
           // 使用终端标题作为通知正文，fallback 到项目名
           const projectName = cwd?.split('/').pop() || 'Unknown';
           const notificationBody = currentTitleRef.current || projectName;
-          console.log('[AgentTerminal] 发送通知, sessionId:', sessionId);
           window.electronAPI.notification.show({
             title: `${agentCommand} 已完成`,
             body: notificationBody,

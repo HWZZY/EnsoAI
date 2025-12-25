@@ -27,6 +27,7 @@ interface MainContentProps {
   worktreeCollapsed?: boolean;
   onExpandWorkspace?: () => void;
   onExpandWorktree?: () => void;
+  onSwitchWorktree?: (worktreePath: string) => void;
 }
 
 const tabs: Array<{ id: TabId; icon: React.ElementType; label: string }> = [
@@ -46,6 +47,7 @@ export function MainContent({
   worktreeCollapsed = false,
   onExpandWorkspace,
   onExpandWorktree,
+  onSwitchWorktree,
 }: MainContentProps) {
   // Need extra padding for traffic lights when both panels are collapsed (macOS only)
   const isMac = window.electronAPI.env.platform === 'darwin';
@@ -136,7 +138,12 @@ export function MainContent({
           )}
         >
           {repoPath && worktreePath ? (
-            <AgentPanel repoPath={repoPath} cwd={worktreePath} isActive={activeTab === 'chat'} />
+            <AgentPanel
+              repoPath={repoPath}
+              cwd={worktreePath}
+              isActive={activeTab === 'chat'}
+              onSwitchWorktree={onSwitchWorktree}
+            />
           ) : (
             <Empty>
               <EmptyMedia variant="icon">
