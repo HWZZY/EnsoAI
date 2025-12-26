@@ -81,11 +81,13 @@ export const zhTranslations: Record<string, string> = {
   'Discard changes': '放弃更改',
   'Discard changes title': '放弃更改',
   'Discard failed': '放弃更改失败',
+  Disabled: '禁用',
   'Downloading update': '正在下载更新',
   Edit: '编辑',
   'Edit Agent': '编辑 Agent',
   'Enable notifications': '启用通知',
   English: '英语',
+  'Enter delay': '启动延迟',
   'Enter a new branch name:': '输入新分支名:',
   'Enter commit message... (Cmd/Ctrl+Enter to commit)': '输入提交信息... (Cmd/Ctrl+Enter 提交)',
   'Enter new branch name': '请输入新分支名',
@@ -319,6 +321,8 @@ export const zhTranslations: Record<string, string> = {
     '终端可向上滚动查看的历史行数，值越大内存占用越高',
   'How long to wait before notifying after the agent stops output.':
     'Agent 停止输出后等待多久发送通知',
+  'How long to wait after pressing Enter before starting idle timer.':
+    '按下 Enter 后等待多久才开始空闲计时',
   'Initialize repository': '初始化仓库',
   'Just now': '刚刚',
   'Learn More': '了解更多',

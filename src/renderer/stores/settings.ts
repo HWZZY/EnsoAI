@@ -288,6 +288,7 @@ interface SettingsState {
   wslEnabled: boolean;
   agentNotificationEnabled: boolean;
   agentNotificationDelay: number; // in seconds
+  agentNotificationEnterDelay: number; // delay after Enter before starting idle timer
   claudeCodeIntegration: ClaudeCodeIntegrationSettings;
 
   setTheme: (theme: Theme) => void;
@@ -315,6 +316,7 @@ interface SettingsState {
   setWslEnabled: (enabled: boolean) => void;
   setAgentNotificationEnabled: (enabled: boolean) => void;
   setAgentNotificationDelay: (delay: number) => void;
+  setAgentNotificationEnterDelay: (delay: number) => void;
   setClaudeCodeIntegration: (settings: Partial<ClaudeCodeIntegrationSettings>) => void;
 }
 
@@ -354,6 +356,7 @@ export const useSettingsStore = create<SettingsState>()(
       wslEnabled: false,
       agentNotificationEnabled: true,
       agentNotificationDelay: 3, // 3 seconds
+      agentNotificationEnterDelay: 0, // 0 = disabled, start timer immediately
       claudeCodeIntegration: defaultClaudeCodeIntegrationSettings,
 
       setTheme: (theme) => {
@@ -455,6 +458,8 @@ export const useSettingsStore = create<SettingsState>()(
       setWslEnabled: (wslEnabled) => set({ wslEnabled }),
       setAgentNotificationEnabled: (agentNotificationEnabled) => set({ agentNotificationEnabled }),
       setAgentNotificationDelay: (agentNotificationDelay) => set({ agentNotificationDelay }),
+      setAgentNotificationEnterDelay: (agentNotificationEnterDelay) =>
+        set({ agentNotificationEnterDelay }),
       setClaudeCodeIntegration: (settings) =>
         set((state) => ({
           claudeCodeIntegration: { ...state.claudeCodeIntegration, ...settings },

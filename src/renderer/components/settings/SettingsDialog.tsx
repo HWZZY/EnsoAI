@@ -132,7 +132,7 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
         <div className="flex items-center justify-between border-b px-4 py-3">
           <DialogTitle className="text-lg font-medium">{t('Settings')}</DialogTitle>
         </div>
-        <div className="flex min-h-[400px]">
+        <div className="flex h-[500px]">
           {/* Left: Category List */}
           <nav className="w-48 shrink-0 space-y-1 border-r p-2">
             {categories.map((category) => (
@@ -184,6 +184,8 @@ function GeneralSettings() {
     setAgentNotificationEnabled,
     agentNotificationDelay,
     setAgentNotificationDelay,
+    agentNotificationEnterDelay,
+    setAgentNotificationEnterDelay,
   } = useSettingsStore();
   const { t, locale } = useI18n();
 
@@ -216,6 +218,17 @@ function GeneralSettings() {
         value,
         label: t('{{count}} seconds', { count: value }),
       })),
+    [t]
+  );
+
+  const enterDelayOptions = React.useMemo(
+    () => [
+      { value: 0, label: t('Disabled') },
+      ...[1, 2, 3, 5].map((value) => ({
+        value,
+        label: t('{{count}} seconds', { count: value }),
+      })),
+    ],
     [t]
   );
 
@@ -410,6 +423,35 @@ function GeneralSettings() {
           </Select>
           <p className="text-xs text-muted-foreground">
             {t('How long to wait before notifying after the agent stops output.')}
+          </p>
+        </div>
+      </div>
+
+      {/* Enter Delay */}
+      <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+        <span className="text-sm font-medium mt-2">{t('Enter delay')}</span>
+        <div className="space-y-1.5">
+          <Select
+            value={String(agentNotificationEnterDelay)}
+            onValueChange={(v) => setAgentNotificationEnterDelay(Number(v))}
+            disabled={!agentNotificationEnabled}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue>
+                {enterDelayOptions.find((o) => o.value === agentNotificationEnterDelay)?.label ??
+                  t('{{count}} seconds', { count: agentNotificationEnterDelay })}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectPopup>
+              {enterDelayOptions.map((opt) => (
+                <SelectItem key={opt.value} value={String(opt.value)}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {t('How long to wait after pressing Enter before starting idle timer.')}
           </p>
         </div>
       </div>

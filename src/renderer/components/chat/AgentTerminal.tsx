@@ -36,12 +36,14 @@ export function AgentTerminal({
   onExit,
 }: AgentTerminalProps) {
   const { t } = useI18n();
-  const { agentNotificationEnabled, agentNotificationDelay } = useSettingsStore();
+  const { agentNotificationEnabled, agentNotificationDelay, agentNotificationEnterDelay } =
+    useSettingsStore();
   const outputBufferRef = useRef('');
   const startTimeRef = useRef<number | null>(null);
   const hasInitializedRef = useRef(false);
   const hasActivatedRef = useRef(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enterDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Delay after Enter before arming idle monitor.
   const isWaitingForIdleRef = useRef(false); // Wait for idle notification; enabled after substantial output.
   const pendingIdleMonitorRef = useRef(false); // Pending idle monitor; enabled after Enter.
   const dataSinceEnterRef = useRef(0); // Track output volume since last Enter.
@@ -197,10 +199,23 @@ export function AgentTerminal({
           hasActivatedRef.current = true;
           onActivated?.();
         }
-        // Reset output counter and enable pending idle monitor.
-        // Actual idle monitoring is armed after receiving substantial output.
+        // Reset output counter.
         dataSinceEnterRef.current = 0;
-        pendingIdleMonitorRef.current = true;
+        // Clear any existing enter delay timer.
+        if (enterDelayTimerRef.current) {
+          clearTimeout(enterDelayTimerRef.current);
+          enterDelayTimerRef.current = null;
+        }
+        // If enter delay is configured, wait before arming idle monitor.
+        if (agentNotificationEnterDelay > 0) {
+          enterDelayTimerRef.current = setTimeout(() => {
+            pendingIdleMonitorRef.current = true;
+            enterDelayTimerRef.current = null;
+          }, agentNotificationEnterDelay * 1000);
+        } else {
+          // No delay - arm idle monitor immediately.
+          pendingIdleMonitorRef.current = true;
+        }
         return true; // Let Enter through normally
       }
 
@@ -210,9 +225,11 @@ export function AgentTerminal({
         return false;
       }
 
-      // User is typing - cancel idle notification
+      // User is typing - cancel idle notification and enter delay timer
       if (
-        (isWaitingForIdleRef.current || pendingIdleMonitorRef.current) &&
+        (isWaitingForIdleRef.current ||
+          pendingIdleMonitorRef.current ||
+          enterDelayTimerRef.current) &&
         !event.metaKey &&
         !event.ctrlKey
       ) {
@@ -222,11 +239,15 @@ export function AgentTerminal({
           clearTimeout(idleTimerRef.current);
           idleTimerRef.current = null;
         }
+        if (enterDelayTimerRef.current) {
+          clearTimeout(enterDelayTimerRef.current);
+          enterDelayTimerRef.current = null;
+        }
       }
 
       return true;
     },
-    [activated, onActivated]
+    [activated, onActivated, agentNotificationEnterDelay]
   );
 
   const {
