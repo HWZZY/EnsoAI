@@ -352,6 +352,40 @@ export function useXterm({
         return false;
       }
 
+      // macOS-style navigation shortcuts (only on keydown to avoid double-firing)
+      if (event.type === 'keydown' && ptyIdRef.current) {
+        // Cmd+Left: jump to line start (Ctrl+A)
+        if (event.metaKey && !event.altKey && event.key === 'ArrowLeft') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x01');
+          return false;
+        }
+        // Cmd+Right: jump to line end (Ctrl+E)
+        if (event.metaKey && !event.altKey && event.key === 'ArrowRight') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x05');
+          return false;
+        }
+        // Option+Left: jump word backward (ESC+b)
+        if (event.altKey && !event.metaKey && event.key === 'ArrowLeft') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x1bb');
+          return false;
+        }
+        // Option+Right: jump word forward (ESC+f)
+        if (event.altKey && !event.metaKey && event.key === 'ArrowRight') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x1bf');
+          return false;
+        }
+        // Option+Backspace: delete word backward (Ctrl+W)
+        if (event.altKey && !event.metaKey && event.key === 'Backspace') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x17');
+          return false;
+        }
+        // Cmd+Backspace: delete to line start (Ctrl+U)
+        if (event.metaKey && !event.altKey && event.key === 'Backspace') {
+          window.electronAPI.terminal.write(ptyIdRef.current, '\x15');
+          return false;
+        }
+      }
+
       if (ptyIdRef.current && onCustomKeyRef.current) {
         return onCustomKeyRef.current(event, ptyIdRef.current);
       }
